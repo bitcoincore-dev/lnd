@@ -1032,7 +1032,7 @@ func (c *ChannelStateDB) pruneLinkNode(openChannels []*OpenChannel,
 	return c.linkNodeDB.DeleteLinkNode(remotePub)
 }
 
-// PruneLinkNodes attempts to prune all link nodes found within the databse with
+// PruneLinkNodes attempts to prune all link nodes found within the database with
 // whom we no longer have any open channels with.
 func (c *ChannelStateDB) PruneLinkNodes() error {
 	allLinkNodes, err := c.linkNodeDB.FetchAllLinkNodes()
