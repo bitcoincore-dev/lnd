@@ -51,7 +51,7 @@ func (q *queue) empty() bool {
 
 // BetweennessCentrality is a NodeMetric that calculates node betweenness
 // centrality using Brandes' algorithm. Betweenness centrality for each node
-// is the number of shortest paths passing trough that node, not counting
+// is the number of shortest paths passing through that node, not counting
 // shortest paths starting or ending at that node. This is a useful metric
 // to measure control of individual nodes over the whole network.
 type BetweennessCentrality struct {
@@ -186,7 +186,7 @@ func (bc *BetweennessCentrality) Refresh(graph ChannelGraph) error {
 		partial := make([]float64, len(cache.Nodes))
 
 		// Consume the next node, update centrality
-		// parital to avoid unnecessary synchronizaton.
+		// partial to avoid unnecessary synchronization.
 		for node := range work {
 			betweennessCentrality(cache, node, partial)
 		}
