@@ -35,6 +35,7 @@ XARGS := xargs -L 1
 include make/testing_flags.mk
 include make/release_flags.mk
 include make/fuzz_flags.mk
+-include help.mk
 
 DEV_TAGS := $(if ${tags},$(DEV_TAGS) ${tags},$(DEV_TAGS))
 
@@ -63,9 +64,10 @@ define print
 	echo $(GREEN)$1$(NC)
 endef
 
-default: scratch
+-:
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?##/ {printf "\033[36m%-15s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
-all: scratch check install
+all: scratch check install## 	all: scratch check install
 
 # ============
 # DEPENDENCIES
@@ -86,12 +88,12 @@ $(GOIMPORTS_BIN):
 # INSTALLATION
 # ============
 
-build:
+build:## 	build
 	@$(call print, "Building debug lnd and lncli.")
 	$(GOBUILD) -tags="$(DEV_TAGS)" -o lnd-debug $(DEV_GCFLAGS) $(DEV_LDFLAGS) $(PKG)/cmd/lnd
 	$(GOBUILD) -tags="$(DEV_TAGS)" -o lncli-debug $(DEV_GCFLAGS) $(DEV_LDFLAGS) $(PKG)/cmd/lncli
 
-build-itest:
+build-itest:## 	build-itest
 	@$(call print, "Building itest btcd and lnd.")
 	CGO_ENABLED=0 $(GOBUILD) -tags="integration" -o itest/btcd-itest$(EXEC_SUFFIX) $(DEV_LDFLAGS) $(BTCD_PKG)
 	CGO_ENABLED=0 $(GOBUILD) -tags="$(ITEST_TAGS)" -o itest/lnd-itest$(EXEC_SUFFIX) $(DEV_LDFLAGS) $(PKG)/cmd/lnd
@@ -99,7 +101,7 @@ build-itest:
 	@$(call print, "Building itest binary for ${backend} backend.")
 	CGO_ENABLED=0 $(GOTEST) -v ./itest -tags="$(DEV_TAGS) $(RPC_TAGS) integration $(backend)" -c -o itest/itest.test$(EXEC_SUFFIX)
 
-build-itest-race:
+build-itest-race:## 	build-itest-race
 	@$(call print, "Building itest btcd and lnd with race detector.")
 	CGO_ENABLED=0 $(GOBUILD) -tags="integration" -o itest/btcd-itest$(EXEC_SUFFIX) $(DEV_LDFLAGS) $(BTCD_PKG)
 	CGO_ENABLED=1 $(GOBUILD) -race -tags="$(ITEST_TAGS)" -o itest/lnd-itest$(EXEC_SUFFIX) $(DEV_LDFLAGS) $(PKG)/cmd/lnd
@@ -107,24 +109,24 @@ build-itest-race:
 	@$(call print, "Building itest binary for ${backend} backend.")
 	CGO_ENABLED=0 $(GOTEST) -v ./itest -tags="$(DEV_TAGS) $(RPC_TAGS) integration $(backend)" -c -o itest/itest.test$(EXEC_SUFFIX)
 
-install:
+install:## 	install
 	@$(call print, "Installing lnd and lncli.")
 	$(GOINSTALL) -tags="${tags}" -ldflags="$(RELEASE_LDFLAGS)" $(PKG)/cmd/lnd
 	$(GOINSTALL) -tags="${tags}" -ldflags="$(RELEASE_LDFLAGS)" $(PKG)/cmd/lncli
 
-release-install:
+release-install:## 	release-install
 	@$(call print, "Installing release lnd and lncli.")
 	env CGO_ENABLED=0 $(GOINSTALL) -v -trimpath -ldflags="$(RELEASE_LDFLAGS)" -tags="$(RELEASE_TAGS)" $(PKG)/cmd/lnd
 	env CGO_ENABLED=0 $(GOINSTALL) -v -trimpath -ldflags="$(RELEASE_LDFLAGS)" -tags="$(RELEASE_TAGS)" $(PKG)/cmd/lncli
 
 # Make sure the generated mobile RPC stubs don't influence our vendor package
 # by removing them first in the clean-mobile target.
-release: clean-mobile
+release: clean-mobile## 	relase
 	@$(call print, "Releasing lnd and lncli binaries.")
 	$(VERSION_CHECK)
 	./scripts/release.sh build-release "$(VERSION_TAG)" "$(BUILD_SYSTEM)" "$(RELEASE_TAGS)" "$(RELEASE_LDFLAGS)"
 
-docker-release:
+docker-release:## 	docker-release
 	@$(call print, "Building release helper docker image.")
 	if [ "$(tag)" = "" ]; then echo "Must specify tag=<commit_or_tag>!"; exit 1; fi
 
@@ -134,20 +136,20 @@ docker-release:
 	# that we might want to overwrite in manual tests.
 	$(DOCKER_RELEASE_HELPER) make release tag="$(tag)" sys="$(sys)" COMMIT="$(COMMIT)" 
 
-docker-tools:
+docker-tools:## 	docker-tools
 	@$(call print, "Building tools docker image.")
 	docker build -q -t lnd-tools $(TOOLS_DIR)
 
-scratch: build
+scratch: build## 	scratch
 
 
-# =======
-# TESTING
-# =======
+## =======
+## TESTING
+## =======
 
-check: unit itest
+check: unit itest## 	check
 
-db-instance:
+db-instance:## 	db-instance
 ifeq ($(dbbackend),postgres)
 	# Remove a previous postgres instance if it exists.
 	docker rm lnd-postgres --force || echo "Starting new postgres container"
@@ -162,29 +164,29 @@ ifeq ($(dbbackend),postgres)
 	sleep $(POSTGRES_START_DELAY)
 endif
 
-itest-only: db-instance
+itest-only: db-instance## 	itest-only
 	@$(call print, "Running integration tests with ${backend} backend.")
 	rm -rf itest/*.log itest/.logs-*; date
 	EXEC_SUFFIX=$(EXEC_SUFFIX) scripts/itest_part.sh 0 1 $(TEST_FLAGS) $(ITEST_FLAGS)
 
-itest: build-itest itest-only
+itest: build-itest itest-only## 	itest: build-itest itest-only
 
-itest-race: build-itest-race itest-only
+itest-race: build-itest-race itest-only## 	itest-race: builde-itest-race itest-only
 
-itest-parallel: build-itest db-instance
+itest-parallel: build-itest db-instance## 	itest-parallel: build-itest db-instance
 	@$(call print, "Running tests")
 	rm -rf itest/*.log itest/.logs-*; date
 	EXEC_SUFFIX=$(EXEC_SUFFIX) echo "$$(seq 0 $$(expr $(ITEST_PARALLELISM) - 1))" | xargs -P $(ITEST_PARALLELISM) -n 1 -I {} scripts/itest_part.sh {} $(NUM_ITEST_TRANCHES) $(TEST_FLAGS) $(ITEST_FLAGS)
 
-itest-clean:
+itest-clean:## 	itest-clean
 	@$(call print, "Cleaning old itest processes")
 	killall lnd-itest || echo "no running lnd-itest process found";
 
-unit: $(BTCD_BIN)
+unit: $(BTCD_BIN)## 	unit
 	@$(call print, "Running unit tests.")
 	$(UNIT)
 
-unit-debug: $(BTCD_BIN)
+unit-debug: $(BTCD_BIN)## 	unit-debug
 	@$(call print, "Running debug unit tests.")
 	$(UNIT_DEBUG)
 
