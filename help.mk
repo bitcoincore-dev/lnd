@@ -155,10 +155,10 @@ export GIT_REPO_PATH
 docker-start:
 ##docker-start
 ##	start docker on Linux or Darwin
-	( \
+	@( \
 	    while ! docker system info > /dev/null 2>&1; do \
-			( \
 			$(call print, "Wwaiting for docker to start..."); \
+			( \
 			if [[ '$(OS)' == 'Linux' ]]; then \
 			type -P systemctl 2>/dev/null && \
 			systemctl restart docker.service || \
@@ -168,9 +168,9 @@ docker-start:
 			if [[ '$(OS)' == 'Darwin' ]]; then \
 			 type -P docker 2>/dev/null && open --background -a /./Applications/Docker.app/Contents/MacOS/Docker; \
 			fi; \
-		sleep 1; \
+			sleep 1; \
 			); \
-	done; \
+		done; \
 	)
 
 detect:
