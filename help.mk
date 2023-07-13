@@ -165,7 +165,6 @@ docker-start:
 		done; \
 	)
 	@( \
-		clear; \
 		$(call print, "1Waiting for docker to start"); \
 		while ! docker system info > /dev/null 2>&1; do \
 			clear; \
