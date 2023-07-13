@@ -1,3 +1,7 @@
+## #####################
+## act local CI commands
+## #####################
+
 act-install:## 	install act from deps/act/install.sh -b
 	@git submodule update --init --recursive  deps/act
 	./deps/act/install.sh -b /usr/local/bin && exec bash
