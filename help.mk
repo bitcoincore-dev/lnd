@@ -166,15 +166,16 @@ docker-start:
 			$(call print, "Wwaiting for docker to start..."); \
 			( \
 			if [[ '$(OS)' == 'Linux' ]]; then \
-			type -P systemctl 2>/dev/null && \
-			systemctl restart docker.service || \
-			type -P service 2>/dev/null && \
-			service restart docker; \
+				type -P systemctl 2>/dev/null 2>&1 && \
+				systemctl restart docker.service || \
+				type -P service 2>/dev/null 2>&1 && \
+				service restart docker; \
 			fi; \
 			if [[ '$(OS)' == 'Darwin' ]]; then \
-				type -P docker 2>/dev/null && open --background -a /./Applications/Docker.app/Contents/MacOS/Docker; \
+				open --background -a /./Applications/Docker.app/Contents/MacOS/Docker; \
 			fi; \
 			sleep 1; \
+			echo -e "\033[2K"; \
 			); \
 		done; \
 	)
