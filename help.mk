@@ -10,6 +10,9 @@ export VERSION
 TIME                                    :=$(shell date +%s)
 export TIME
 
+CHECK_MARK                              :=\033[0;32m\xE2\x9C\x94\033[0m
+export CHECK_MARK
+
 OS                                      :=$(shell uname -s)
 export OS
 OS_VERSION                              :=$(shell uname -r)
@@ -141,38 +144,53 @@ GIT_REPO_PATH                           := $(HOME)/$(GIT_REPO_NAME)
 export GIT_REPO_PATH
 
 #.PHONY:- print-help
-print-help:
-	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?##/ {printf "\033[36m%-15s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
-help:## 	
-	@sed -n 's/^##//p' ${MAKEFILE_LIST} | column -t -s ':' |  sed -e 's/^/ /'
+#print-help:
+#	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?##/ {printf "\033[36m%-15s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+#-:##
+#	@sed -n 's/^##//p' ${MAKEFILE_LIST} | column -t -s ':' |  sed -e 's/^/ /'
 
-##initialize
-##	git submodule update --init --recursive
-initialize:## 	ensure submodules exist
-	git submodule update --init --recursive
+###initialize
+###	git submodule update --init --recursive
+#initialize:## 	ensure submodules exist
+#	git submodule update --init --recursive
 
 .ONESHELL:
-docker-start:venv
+docker-start:
 ##docker-start
 ##	start docker on Linux or Darwin
-	@touch requirements.txt && $(PYTHON3) -m pip install -q -r requirements.txt
-	@test -d .venv || $(PYTHON3) -m virtualenv .venv
 	@( \
-	   . .venv/bin/activate; pip install -q -r requirements.txt; \
-	   python3 -m pip install -q pipenv \
-	   pip install -q --upgrade pip; \
-	);
+		PID=$!;trap handler SIGINT;\
+		while kill -0 $(PID) > /dev/null 2>&1; do \
+			wait $(PID); \
+		done; \
+	)
 	@( \
-	    while ! docker system info > /dev/null 2>&1; do\
-	    echo 'Waiting for docker to start...';\
-	    if [[ '$(OS)' == 'Linux' ]]; then\
-	     type -P systemctl && systemctl restart docker.service || type -P service && service restart docker;\
-	    fi;\
-	    if [[ '$(OS)' == 'Darwin' ]]; then\
-	     type -P docker && open --background -a /./Applications/Docker.app/Contents/MacOS/Docker;\
-	    fi;\
-	sleep 1;\
-	done\
+		$(call print, "1Waiting for docker to start"); \
+		while ! docker system info > /dev/null 2>&1; do \
+			clear; \
+			$(call print, "2Waiting for docker to start."); \
+			sleep 1; \
+			( \
+			if [[ '$(OS)' == 'Linux' ]]; then \
+				type -P systemctl 2>/dev/null 2>&1 && \
+				systemctl restart docker.service || \
+				type -P service 2>/dev/null 2>&1 && \
+				service restart docker; \
+			fi; \
+			clear; \
+			$(call print, "3Waiting for docker to start.."); \
+			sleep 1; \
+			if [[ '$(OS)' == 'Darwin' ]]; then \
+				open --background -a /./Applications/Docker.app/Contents/MacOS/Docker; \
+			fi; \
+			clear; \
+			$(call print, "\033[5A4Waiting for docker to start..."); \
+			sleep 1; \
+			clear; \
+			$(call print, "5Waiting for docker to start...."); \
+			); \
+		done; \
+	echo -e "\\r${CHECK_MARK} docker started..."; \
 	)
 
 detect:
