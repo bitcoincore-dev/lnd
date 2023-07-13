@@ -35,7 +35,7 @@ XARGS := xargs -L 1
 include make/testing_flags.mk
 include make/release_flags.mk
 include make/fuzz_flags.mk
--include help.mk
+include help.mk
 
 DEV_TAGS := $(if ${tags},$(DEV_TAGS) ${tags},$(DEV_TAGS))
 
