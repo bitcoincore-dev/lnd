@@ -156,7 +156,13 @@ docker-start:
 ##docker-start
 ##	start docker on Linux or Darwin
 	@( \
-	    while ! docker system info > /dev/null 2>&1; do \
+		PID=$!;trap handler SIGINT;\
+		while kill -0 $(PID) > /dev/null 2>&1; do \
+			wait $(PID); \
+		done; \
+	)
+	@( \
+		while ! docker system info > /dev/null 2>&1; do \
 			$(call print, "Wwaiting for docker to start..."); \
 			( \
 			if [[ '$(OS)' == 'Linux' ]]; then \
@@ -166,7 +172,7 @@ docker-start:
 			service restart docker; \
 			fi; \
 			if [[ '$(OS)' == 'Darwin' ]]; then \
-			 type -P docker 2>/dev/null && open --background -a /./Applications/Docker.app/Contents/MacOS/Docker; \
+				type -P docker 2>/dev/null && open --background -a /./Applications/Docker.app/Contents/MacOS/Docker; \
 			fi; \
 			sleep 1; \
 			); \
