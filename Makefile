@@ -67,26 +67,29 @@ endef
 -:
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?##/ {printf "\033[36m%-15s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
-all: scratch check install## 	all: scratch check install
+all: scratch check install## 	scratch check install
 
-# ============
-# DEPENDENCIES
-# ============
+## ============
+## DEPENDENCIES
+## ============
 $(GOACC_BIN):
+## 	$(GOACC_BIN)
 	@$(call print, "Installing go-acc.")
 	cd $(TOOLS_DIR); go install -trimpath -tags=tools $(GOACC_PKG)
 
 $(BTCD_BIN):
+## 	$(BTCD_BIN)
 	@$(call print, "Installing btcd.")
 	cd $(TOOLS_DIR); go install -trimpath $(BTCD_PKG)
 
 $(GOIMPORTS_BIN):
+## 	$(GOIMPORT_BIN)
 	@$(call print, "Installing goimports.")
 	cd $(TOOLS_DIR); go install -trimpath $(GOIMPORTS_PKG)
 
-# ============
-# INSTALLATION
-# ============
+## ============
+## INSTALLATION
+## ============
 
 build:## 	build
 	@$(call print, "Building debug lnd and lncli.")
