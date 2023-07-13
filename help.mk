@@ -141,38 +141,36 @@ GIT_REPO_PATH                           := $(HOME)/$(GIT_REPO_NAME)
 export GIT_REPO_PATH
 
 #.PHONY:- print-help
-print-help:
-	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?##/ {printf "\033[36m%-15s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
-help:## 	
-	@sed -n 's/^##//p' ${MAKEFILE_LIST} | column -t -s ':' |  sed -e 's/^/ /'
+#print-help:
+#	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?##/ {printf "\033[36m%-15s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+#-:## 	
+#	@sed -n 's/^##//p' ${MAKEFILE_LIST} | column -t -s ':' |  sed -e 's/^/ /'
 
-##initialize
-##	git submodule update --init --recursive
-initialize:## 	ensure submodules exist
-	git submodule update --init --recursive
+###initialize
+###	git submodule update --init --recursive
+#initialize:## 	ensure submodules exist
+#	git submodule update --init --recursive
 
 .ONESHELL:
-docker-start:venv
+docker-start:
 ##docker-start
 ##	start docker on Linux or Darwin
-	@touch requirements.txt && $(PYTHON3) -m pip install -q -r requirements.txt
-	@test -d .venv || $(PYTHON3) -m virtualenv .venv
-	@( \
-	   . .venv/bin/activate; pip install -q -r requirements.txt; \
-	   python3 -m pip install -q pipenv \
-	   pip install -q --upgrade pip; \
-	);
-	@( \
-	    while ! docker system info > /dev/null 2>&1; do\
-	    echo 'Waiting for docker to start...';\
-	    if [[ '$(OS)' == 'Linux' ]]; then\
-	     type -P systemctl && systemctl restart docker.service || type -P service && service restart docker;\
-	    fi;\
-	    if [[ '$(OS)' == 'Darwin' ]]; then\
-	     type -P docker && open --background -a /./Applications/Docker.app/Contents/MacOS/Docker;\
-	    fi;\
-	sleep 1;\
-	done\
+	( \
+	    while ! docker system info > /dev/null 2>&1; do \
+			( \
+			$(call print, "Wwaiting for docker to start..."); \
+			if [[ '$(OS)' == 'Linux' ]]; then \
+			type -P systemctl 2>/dev/null && \
+			systemctl restart docker.service || \
+			type -P service 2>/dev/null && \
+			service restart docker; \
+			fi; \
+			if [[ '$(OS)' == 'Darwin' ]]; then \
+			 type -P docker 2>/dev/null && open --background -a /./Applications/Docker.app/Contents/MacOS/Docker; \
+			fi; \
+		sleep 1; \
+			); \
+	done; \
 	)
 
 detect:

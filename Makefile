@@ -35,7 +35,7 @@ XARGS := xargs -L 1
 include make/testing_flags.mk
 include make/release_flags.mk
 include make/fuzz_flags.mk
--include help.mk
+include help.mk
 
 DEV_TAGS := $(if ${tags},$(DEV_TAGS) ${tags},$(DEV_TAGS))
 
@@ -64,7 +64,9 @@ define print
 	echo $(GREEN)$1$(NC)
 endef
 
--:
+default: scratch
+
+help:
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?##/ {printf "\033[36m%-15s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
 all: scratch check install## 	scratch check install
