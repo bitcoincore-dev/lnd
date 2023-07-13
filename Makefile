@@ -56,7 +56,7 @@ ifneq ($(workers),)
 LINT_WORKERS = --concurrency=$(workers)
 endif
 
-DOCKER_TOOLS = docker run --rm -v $$(pwd):/build lnd-tools
+DOCKER_TOOLS = $(shell type -P docker) run --rm -v $$(pwd):/build lnd-tools || echo "install docker..."
 
 GREEN := "\\033[0;32m"
 NC := "\\033[0m"
@@ -64,7 +64,9 @@ define print
 	echo $(GREEN)$1$(NC)
 endef
 
--:
+default: scratch
+
+help:
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?##/ {printf "\033[36m%-15s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
 all: scratch check install## 	scratch check install
@@ -124,7 +126,7 @@ release-install:## 	release-install
 
 # Make sure the generated mobile RPC stubs don't influence our vendor package
 # by removing them first in the clean-mobile target.
-release: clean-mobile## 	relase
+release: clean-mobile## 	release
 	@$(call print, "Releasing lnd and lncli binaries.")
 	$(VERSION_CHECK)
 	./scripts/release.sh build-release "$(VERSION_TAG)" "$(BUILD_SYSTEM)" "$(RELEASE_TAGS)" "$(RELEASE_LDFLAGS)"
@@ -193,11 +195,11 @@ unit-debug: $(BTCD_BIN)## 	unit-debug
 	@$(call print, "Running debug unit tests.")
 	$(UNIT_DEBUG)
 
-unit-cover: $(GOACC_BIN)
+unit-cover: $(GOACC_BIN)## 	unit-cover
 	@$(call print, "Running unit coverage tests.")
 	$(GOACC)
 
-unit-race:
+unit-race:## 	unit-race
 	@$(call print, "Running unit race tests.")
 	env CGO_ENABLED=1 GORACE="history_size=7 halt_on_errors=1" $(UNIT_RACE)
 
@@ -205,60 +207,61 @@ unit-bench: $(BTCD_BIN)
 	@$(call print, "Running benchmark tests.")
 	$(UNIT_BENCH)
 
-# =============
-# FLAKE HUNTING
-# =============
+## =============
+## FLAKE HUNTING
+## =============
 
-flakehunter: build-itest
+flakehunter: build-itest## 	flakehunter
 	@$(call print, "Flake hunting ${backend} integration tests.")
 	while [ $$? -eq 0 ]; do make itest-only icase='${icase}' backend='${backend}'; done
 
-flake-unit:
+flake-unit:## 	flake-unit
 	@$(call print, "Flake hunting unit tests.")
 	while [ $$? -eq 0 ]; do GOTRACEBACK=all $(UNIT) -count=1; done
 
-flakehunter-parallel:
+flakehunter-parallel:## 	flakehunter-parallel
 	@$(call print, "Flake hunting ${backend} integration tests in parallel.")
 	while [ $$? -eq 0 ]; do make itest-parallel tranches=1 parallel=${ITEST_PARALLELISM} icase='${icase}' backend='${backend}'; done
 
-# =============
-# FUZZING
-# =============
+## =============
+## FUZZING
+## =============
 
-fuzz:
+fuzz:## 	fuzz
 	@$(call print, "Fuzzing packages '$(FUZZPKG)'.")
 	scripts/fuzz.sh run "$(FUZZPKG)" "$(FUZZ_TEST_RUN_TIME)" "$(FUZZ_NUM_PROCESSES)"
 
-# =========
-# UTILITIES
-# =========
+## =========
+## UTILITIES
+## =========
 
-fmt: $(GOIMPORTS_BIN)
+fmt: $(GOIMPORTS_BIN)## 	fmt
 	@$(call print, "Fixing imports.")
 	gosimports -w $(GOFILES_NOVENDOR)
 	@$(call print, "Formatting source.")
 	gofmt -l -w -s $(GOFILES_NOVENDOR)
 
-fmt-check: fmt
+fmt-check: fmt## 	fmt-check
 	@$(call print, "Checking fmt results.")
 	if test -n "$$(git status --porcelain)"; then echo "code not formatted correctly, please run `make fmt` again!"; git status; git diff; exit 1; fi
 
-lint: docker-tools
+lint: docker-tools## 	lint: docker-tools
 	@$(call print, "Linting source.")
 	$(DOCKER_TOOLS) golangci-lint run -v $(LINT_WORKERS)
 
-list:
+list:## 	list
 	@$(call print, "Listing commands.")
-	@$(MAKE) -qp | \
-		awk -F':' '/^[a-zA-Z0-9][^$$#\/\t=]*:([^=]|$$)/ {split($$1,A,/ /);for(i in A)print A[i]}' | \
-		grep -v Makefile | \
-		sort
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?##/ {printf "\033[36m%-15s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+	#@$(MAKE) -qp | \
+	#	awk -F':' '/^[a-zA-Z0-9][^$$#\/\t=]*:([^=]|$$)/ {split($$1,A,/ /);for(i in A)print A[i]}' | \
+	#	grep -v Makefile | \
+	#	sort
 
-sqlc:
+sqlc:## 	sqlc
 	@$(call print, "Generating sql models and queries in Go")
 	./scripts/gen_sqlc_docker.sh
 
-sqlc-check: sqlc
+sqlc-check: sqlc## 	sqlc-check
 	@$(call print, "Verifying sql code generation.")
 	if test -n "$$(git status --porcelain '*.go')"; then echo "SQL models not properly generated!"; git status --porcelain '*.go'; exit 1; fi
 
