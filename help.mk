@@ -10,6 +10,9 @@ export VERSION
 TIME                                    :=$(shell date +%s)
 export TIME
 
+CHECK_MARK                              :=\033[0;32m\xE2\x9C\x94\033[0m
+export CHECK_MARK
+
 OS                                      :=$(shell uname -s)
 export OS
 OS_VERSION                              :=$(shell uname -r)
@@ -162,8 +165,12 @@ docker-start:
 		done; \
 	)
 	@( \
+		clear; \
+		$(call print, "1Waiting for docker to start"); \
 		while ! docker system info > /dev/null 2>&1; do \
-			$(call print, "Wwaiting for docker to start..."); \
+			clear; \
+			$(call print, "2Waiting for docker to start."); \
+			sleep 1; \
 			( \
 			if [[ '$(OS)' == 'Linux' ]]; then \
 				type -P systemctl 2>/dev/null 2>&1 && \
@@ -171,13 +178,20 @@ docker-start:
 				type -P service 2>/dev/null 2>&1 && \
 				service restart docker; \
 			fi; \
+			clear; \
+			$(call print, "3Waiting for docker to start.."); \
+			sleep 1; \
 			if [[ '$(OS)' == 'Darwin' ]]; then \
 				open --background -a /./Applications/Docker.app/Contents/MacOS/Docker; \
 			fi; \
+			clear; \
+			$(call print, "\033[5A4Waiting for docker to start..."); \
 			sleep 1; \
-			echo -e "\033[2K"; \
+			clear; \
+			$(call print, "5Waiting for docker to start...."); \
 			); \
 		done; \
+	echo -e "\\r${CHECK_MARK} docker started..."; \
 	)
 
 detect:
